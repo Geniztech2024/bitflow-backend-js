@@ -1,16 +1,23 @@
 // src/services/profileService.js
+
 import User from '../models/userModel.js';
 import KYCModel from '../models/KYCModel.js'; // Import the default export
-import { sendNotification,  } from './notificationService.js';
-import {sendOTPSMS} from './smsService.js'
+import { sendNotification, sendOTPEmail } from './smsService.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
+// Update KYC information
 export const updateKYC = async (userId, kycData) => {
     try {
         const kyc = await KYCModel.findOneAndUpdate({ userId }, kycData, { new: true, upsert: true });
+
         // Send notification
-        await sendNotification(userId, 'KYC Update Successful', 'Your KYC information has been updated.');
+        await sendNotification({
+            email: kycData.email,
+            message: 'Your KYC information has been updated.',
+            subject: 'KYC Update Successful'
+        });
+
         return kyc;
     } catch (error) {
         console.error('Error updating KYC:', error);
@@ -18,6 +25,7 @@ export const updateKYC = async (userId, kycData) => {
     }
 };
 
+// Change user password
 export const changePassword = async (userId, currentPassword, newPassword) => {
     try {
         const user = await User.findById(userId).exec();
@@ -31,13 +39,18 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
         await user.save();
 
         // Send notification
-        await sendNotification(user.email, 'Password Change Successful', 'Your password has been successfully changed.');
+        await sendNotification({
+            email: user.email,
+            message: 'Your password has been successfully changed.',
+            subject: 'Password Change Successful'
+        });
     } catch (error) {
         console.error('Error changing password:', error);
         throw new Error('Failed to change password');
     }
 };
 
+// Handle forgot password
 export const forgotPassword = async (email) => {
     try {
         const user = await User.findOne({ email }).exec();
@@ -51,16 +64,21 @@ export const forgotPassword = async (email) => {
         await user.save();
 
         // Send OTP to email
-        await otpService.sendOTP(email, resetToken);
+        await sendOTPEmail(email, resetToken);
 
         // Send notification
-        await sendNotification(email, 'Password Reset Request', 'A password reset link has been sent to your email.');
+        await sendNotification({
+            email,
+            message: 'A password reset link has been sent to your email.',
+            subject: 'Password Reset Request'
+        });
     } catch (error) {
         console.error('Error handling forgot password:', error);
         throw new Error('Failed to handle forgot password');
     }
 };
 
+// Reset password
 export const resetPassword = async (resetToken, newPassword) => {
     try {
         const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
@@ -77,7 +95,11 @@ export const resetPassword = async (resetToken, newPassword) => {
         await user.save();
 
         // Send notification
-        await sendNotification(user.email, 'Password Reset Successful', 'Your password has been successfully reset.');
+        await sendNotification({
+            email: user.email,
+            message: 'Your password has been successfully reset.',
+            subject: 'Password Reset Successful'
+        });
     } catch (error) {
         console.error('Error resetting password:', error);
         throw new Error('Failed to reset password');

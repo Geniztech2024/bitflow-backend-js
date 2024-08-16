@@ -1,10 +1,12 @@
+// src/controllers/authController.js
+
 import User from '../models/userModel.js';
 import crypto from 'crypto';
-import { sendOTPSMS } from '../services/smsService.js';
-import passport from 'passport';
+import { sendOTPEmail } from '../services/smsService.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { addCountryCode } from '../utils/phoneUtils.js';
+import passport from 'passport'; // <-- Make sure to import passport here
 
 // Register a new user
 export const register = async (req, res) => {
@@ -37,14 +39,14 @@ export const register = async (req, res) => {
 
         await newUser.save();
 
-        await sendOTPSMS(formattedPhoneNumber, `Your OTP is ${otp}`);
+        // Send OTP via email
+        await sendOTPEmail(email, otp);
 
-        res.status(201).json({ message: 'User registered. OTP sent to phone number.' });
+        res.status(201).json({ message: 'User registered. OTP sent to email.' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
-
 
 // Verify OTP
 export const verifyOtp = async (req, res) => {
@@ -120,10 +122,10 @@ export const resendOtp = async (req, res) => {
 
         await user.save();
 
-        // Send the new OTP to the user's phone number
-        await sendOTPSMS(user.phoneNumber, `Your new OTP is ${otp}`);
+        // Send the new OTP to the user's email
+        await sendOTPEmail(user.email, otp);
 
-        res.status(200).json({ message: 'New OTP sent to phone number.' });
+        res.status(200).json({ message: 'New OTP sent to email.' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
