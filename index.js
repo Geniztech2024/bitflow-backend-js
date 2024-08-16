@@ -16,8 +16,16 @@ dotenv.config();
 
 const app = express();
 
+// CORS options
+const corsOptions = {
+  origin: '*',  // Allows all origins (for development purposes)
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,  // Allows credentials to be included in requests (optional)
+  optionsSuccessStatus: 204
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));  // Use the CORS middleware with custom options
 app.use(helmet());
 app.use(express.json());
 
