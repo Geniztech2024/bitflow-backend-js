@@ -1,5 +1,5 @@
 // src/controllers/profileController.js
-import { updateKYC as updateKYCService, changePassword as changePasswordService, forgotPassword as forgotPasswordService, resetPassword as resetPasswordService } from '../services/profileService.js';
+import { updateKYC as updateKYCService, changePassword as changePasswordService, forgotPassword as forgotPasswordService, resetPassword as resetPasswordService, confirmAuthCode as confirmAuthCodeService } from '../services/profileService.js';
 
 export const updateKYC = async (req, res) => {
     try {
@@ -38,6 +38,16 @@ export const resetPassword = async (req, res) => {
         const { resetToken, newPassword } = req.body;
         await resetPassword(resetToken, newPassword);
         return res.status(200).json({ message: 'Password reset successfully' });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+export const confirmAuthCode = async (req, res) => {
+    try {
+        const { email, authCode } = req.body;
+        const user = await confirmAuthCodeService(email, authCode);
+        return res.status(200).json({ message: 'Authentication code verified successfully', user });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }

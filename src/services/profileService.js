@@ -105,3 +105,25 @@ export const resetPassword = async (resetToken, newPassword) => {
         throw new Error('Failed to reset password');
     }
 };
+
+export const confirmAuthCode = async (email, authCode) => {
+    try {
+        const user = await User.findOne({ email }).exec();
+        if (!user) throw new Error('User not found');
+
+        const hashedToken = crypto.createHash('sha256').update(authCode).digest('hex');
+        if (user.passwordResetToken !== hashedToken || user.passwordResetExpires < Date.now()) {
+            throw new Error('Invalid or expired authentication code');
+        }
+
+        // Clear the reset token and expiration after successful confirmation
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+
+        return user;
+    } catch (error) {
+        console.error('Error confirming authentication code:', error);
+        throw new Error('Failed to confirm authentication code');
+    }
+};

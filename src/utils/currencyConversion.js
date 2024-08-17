@@ -1,11 +1,30 @@
-// src/utils/currencyConversion.js
+import axios from 'axios';
 
-export const convertCurrency = async (cryptoBalance, currency) => {
-    // Example conversion rate in USD for the total cryptocurrency balance
-    const conversionRate = currency === 'NGN' ? 460 : 1;
+const EXCHANGE_RATE_API_URL = 'https://openexchangerates.org/api/latest.json';
+const EXCHANGE_RATE_API_KEY = process.env.EXCHANGE_RATE_API_KEY;
 
-    // Convert the balance to the target currency
-    const convertedBalance = cryptoBalance * conversionRate;
+export const convertCurrency = async (cryptoBalance, targetCurrency) => {
+    try {
+        const response = await axios.get(EXCHANGE_RATE_API_URL, {
+            params: {
+                app_id: EXCHANGE_RATE_API_KEY,
+                symbols: targetCurrency, // Target currency, e.g., 'NGN'
+            },
+        });
 
-    return convertedBalance;
+        const rates = response.data.rates;
+        const conversionRate = rates[targetCurrency];
+
+        if (!conversionRate) {
+            throw new Error(`Conversion rate for ${targetCurrency} not found.`);
+        }
+
+        // Convert the balance to the target currency using the live conversion rate
+        const convertedBalance = cryptoBalance * conversionRate;
+
+        return convertedBalance;
+    } catch (error) {
+        console.error('Error fetching conversion rate:', error.message);
+        throw new Error('Failed to convert currency using live rates.');
+    }
 };
