@@ -8,14 +8,20 @@ import jwt from 'jsonwebtoken';
 import { addCountryCode } from '../utils/phoneUtils.js';
 import passport from 'passport'; // <-- Make sure to import passport here
 
+
 // Register a new user
 export const register = async (req, res) => {
-    const { fullName, email, password, gender, phoneNumber, googleId } = req.body;
+    const { fullName, email, password, confirmPassword, gender, phoneNumber, googleId } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // Check if password and confirmPassword match
+        if (password !== confirmPassword) {
+            return res.status(400).json({ message: 'Passwords do not match' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -47,6 +53,7 @@ export const register = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
 
 // Verify OTP
 export const verifyOtp = async (req, res) => {
