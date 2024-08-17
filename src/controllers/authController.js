@@ -1,13 +1,10 @@
-// src/controllers/authController.js
-
 import User from '../models/userModel.js';
 import crypto from 'crypto';
 import { sendOTPEmail } from '../services/smsService.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { addCountryCode } from '../utils/phoneUtils.js';
-import passport from 'passport'; // <-- Make sure to import passport here
-
+import passport from 'passport';
 
 // Register a new user
 export const register = async (req, res) => {
@@ -15,14 +12,18 @@ export const register = async (req, res) => {
     const { fullName, email, password, confirmPassword, gender, phoneNumber, googleId } = req.body;
 
     try {
+        // Validate input
+        if (!fullName || !email || !password || !confirmPassword || !gender || !phoneNumber) {
+            return res.status(400).json({ message: 'all fields required' });
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({ message: 'Passwords do not match' });
+        }
+
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
-        }
-
-        // Check if password and confirmPassword match
-        if (password !== confirmPassword) {
-            return res.status(400).json({ message: 'Passwords do not match' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -40,19 +41,20 @@ export const register = async (req, res) => {
             ...(googleId && { googleId })
         });
 
-        if (googleId) {
-            newUser.googleId = googleId;
-        }
-
         await newUser.save();
 
         // Send OTP via email
-        await sendOTPEmail(email, otp);
+        try {
+            await sendOTPEmail(email, otp);
+        } catch (error) {
+            console.error('Error sending OTP email:', error.message);
+            return res.status(500).json({ message: 'User registered, but failed to send OTP' });
+        }
 
         res.status(201).json({ message: 'User registered. OTP sent to email.' });
     } catch (error) {
-        console.error('Error occurred during registration:', error); 
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('Error occurred during registration:', error);
+        res.status(500).json({ message: 'Server error during registration', error: error.message });
     }
 };
 
@@ -61,6 +63,10 @@ export const verifyOtp = async (req, res) => {
     const { email, otp } = req.body;
 
     try {
+        if (!email || !otp) {
+            return res.status(400).json({ message: 'Email and OTP are required' });
+        }
+
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -79,7 +85,8 @@ export const verifyOtp = async (req, res) => {
 
         res.status(200).json({ message: 'Account verified' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('Error occurred during OTP verification:', error);
+        res.status(500).json({ message: 'Server error during OTP verification', error: error.message });
     }
 };
 
@@ -88,6 +95,10 @@ export const requestOtp = async (req, res) => {
     const { email } = req.body;
 
     try {
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -109,11 +120,17 @@ export const requestOtp = async (req, res) => {
         await user.save();
 
         // Send the new OTP to the user's email
-        await sendOTPEmail(user.email, otp);
+        try {
+            await sendOTPEmail(user.email, otp);
+        } catch (error) {
+            console.error('Error sending OTP email:', error.message);
+            return res.status(500).json({ message: 'Failed to send new OTP' });
+        }
 
         res.status(200).json({ message: 'New OTP sent to email.' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('Error occurred during OTP request:', error);
+        res.status(500).json({ message: 'Server error during OTP request', error: error.message });
     }
 };
 
@@ -122,6 +139,10 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
+        }
+
         const user = await User.findOne({ email });
         if (!user || !user.isVerified) {
             return res.status(400).json({ message: 'Invalid credentials or account not verified' });
@@ -135,11 +156,10 @@ export const login = async (req, res) => {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).json({ token });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('Error occurred during login:', error);
+        res.status(500).json({ message: 'Server error during login', error: error.message });
     }
 };
-
-
 
 // Google OAuth
 export const googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
