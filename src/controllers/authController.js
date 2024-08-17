@@ -51,6 +51,7 @@ export const register = async (req, res) => {
 
         res.status(201).json({ message: 'User registered. OTP sent to email.' });
     } catch (error) {
+        console.error('Error occurred during registration:', error); 
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
