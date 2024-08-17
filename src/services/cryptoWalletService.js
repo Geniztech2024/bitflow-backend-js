@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import axios from 'axios';
 import { sendNotification } from './notificationService.js';
 import User from '../models/userModel.js';
+import TradingHistory from '../models/tradingHistoryModel.js';
 
 const infuraUrl = process.env.INFURA_PROJECT_URL || 'https://default-url.example.com';
 const web3 = new Web3(new Web3.providers.HttpProvider(infuraUrl));
@@ -36,6 +37,7 @@ export const transferCrypto = async (fromAddress, toAddress, amount, privateKey)
         to: toAddress,
         value: web3.utils.toWei(amount.toString(), 'ether'),
         gas: 21000,
+        
     };
 
     try {
@@ -58,6 +60,21 @@ export const transferCrypto = async (fromAddress, toAddress, amount, privateKey)
         console.error('Error transferring crypto:', error);
         throw new Error('Failed to transfer crypto');
     }
+
+    const transaction = {
+        userId: fromUser._id,
+        transactionType: 'TRANSFER',
+        fromAddress,
+        toAddress,
+        amount,
+        currency: 'ETH', // Adjust this based on your application's requirements
+        status: receipt.status ? 'SUCCESS' : 'FAILED',
+        transactionHash: receipt.transactionHash,
+    };
+    
+    await TradingHistory.create(transaction);
+    
+    return receipt;
 };
 
 export const performP2PTrade = async (sellerAddress, buyerAddress, amount, privateKey) => {
@@ -80,6 +97,22 @@ export const performP2PTrade = async (sellerAddress, buyerAddress, amount, priva
         console.error('Error performing P2P trade:', error);
         throw new Error('Failed to perform P2P trade');
     }
+    
+const tradeTransaction = {
+    userId: sellerUser._id, // or buyerUser._id based on your requirement
+    transactionType: 'P2P_TRADE',
+    fromAddress: buyerAddress,
+    toAddress: sellerAddress,
+    amount,
+    currency: 'ETH', // Adjust this based on your application's requirements
+    status: receipt.status ? 'SUCCESS' : 'FAILED',
+    transactionHash: receipt.transactionHash,
+};
+
+await TradingHistory.create(tradeTransaction);
+
+return receipt;
+
 };
 
 export const swapCrypto = async (
@@ -121,6 +154,23 @@ export const swapCrypto = async (
         console.error('Error swapping crypto with MoonPay:', error);
         throw new Error('Failed to swap crypto');
     }
+
+    
+const swapTransaction = {
+    userId: fromUser._id,
+    transactionType: 'SWAP',
+    fromAddress: fromWalletAddress,
+    toAddress: toWalletAddress,
+    amount,
+    currency: `${fromCurrency} -> ${toCurrency}`,
+    status: 'SUCCESS', // Assuming successful swap
+    transactionHash: response.data.transactionHash, // Adjust based on actual data returned by MoonPay
+};
+
+await TradingHistory.create(swapTransaction);
+
+return response.data;
+
 };
 
 export const sellCryptoWithMoonPay = async (walletAddress, amount, bankAccount) => {

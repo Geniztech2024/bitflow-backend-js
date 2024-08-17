@@ -12,6 +12,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import './src/config/passportConfig.js';
 import connectDB from './src/config/db.js';
+import tradingHistoryRoute from './src/routes/tradingHistoryRoute.js'; // This import is correct
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/utilities', utilityRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/tradinghistory', tradingHistoryRoute); // Use the correct variable name here
 
 // Root route
 app.get('/', (req, res) => {
