@@ -7,6 +7,7 @@ import cryptoRoutes from './src/routes/cryptoRoute.js';
 import profileRoutes from './src/routes/profileRoute.js';
 import utilityRoutes from './src/routes/utilityRoutes.js';
 import transactionRoutes from './src/routes/transactionRoute.js';
+import walletRoutes from './src/routes/walletRoutes.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import './src/config/passportConfig.js';
@@ -48,6 +49,7 @@ app.use('/api/crypto', cryptoRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/utilities', utilityRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // Root route
 app.get('/', (req, res) => {
