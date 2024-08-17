@@ -28,16 +28,16 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const otp = crypto.randomBytes(3).toString('hex');
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        const formattedPhoneNumber = addCountryCode(phoneNumber);
 
         const newUser = new User({
             fullName,
             email,
             password: hashedPassword,
             gender,
-            phoneNumber: formattedPhoneNumber,
+            phoneNumber,
             otp,
             otpExpires,
+            ...(googleId && { googleId })
         });
 
         if (googleId) {
@@ -55,7 +55,6 @@ export const register = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
-
 
 // Verify OTP
 export const verifyOtp = async (req, res) => {
@@ -84,30 +83,8 @@ export const verifyOtp = async (req, res) => {
     }
 };
 
-// Login
-export const login = async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const user = await User.findOne({ email });
-        if (!user || !user.isVerified) {
-            return res.status(400).json({ message: 'Invalid credentials or account not verified' });
-        }
-
-        const isMatch = user.password ? await bcrypt.compare(password, user.password) : false;
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(200).json({ token });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
 // Resend OTP
-export const resendOtp = async (req, res) => {
+export const requestOtp = async (req, res) => {
     const { email } = req.body;
 
     try {
@@ -139,6 +116,30 @@ export const resendOtp = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+// Login
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user || !user.isVerified) {
+            return res.status(400).json({ message: 'Invalid credentials or account not verified' });
+        }
+
+        const isMatch = user.password ? await bcrypt.compare(password, user.password) : false;
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.status(200).json({ token });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+
 
 // Google OAuth
 export const googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
