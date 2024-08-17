@@ -11,6 +11,7 @@ import passport from 'passport'; // <-- Make sure to import passport here
 
 // Register a new user
 export const register = async (req, res) => {
+    console.log('Request Body:', req.body);
     const { fullName, email, password, confirmPassword, gender, phoneNumber, googleId } = req.body;
 
     try {
