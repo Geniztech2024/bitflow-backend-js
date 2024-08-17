@@ -60,11 +60,11 @@ export const register = async (req, res) => {
 
 // Verify OTP
 export const verifyOtp = async (req, res) => {
-    const { email, otp } = req.body;
+    const {otp } = req.body;
 
     try {
-        if (!email || !otp) {
-            return res.status(400).json({ message: 'Email and OTP are required' });
+        if (!otp) {
+            return res.status(400).json({ message: ' OTP are required' });
         }
 
         const user = await User.findOne({ email });
