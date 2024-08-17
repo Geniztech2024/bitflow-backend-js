@@ -60,20 +60,21 @@ export const register = async (req, res) => {
 
 // Verify OTP
 export const verifyOtp = async (req, res) => {
-    const {otp } = req.body;
+    const { otp } = req.body;
 
     try {
         if (!otp) {
-            return res.status(400).json({ message: ' OTP are required' });
+            return res.status(400).json({ message: 'OTP is required' });
         }
 
-        const user = await User.findOne({ email });
+        // Find the user by OTP
+        const user = await User.findOne({ otp });
 
         if (!user) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(400).json({ message: 'User not found or OTP is incorrect' });
         }
 
-        if (user.otp !== otp || !user.otpExpires || user.otpExpires < new Date()) {
+        if (!user.otpExpires || user.otpExpires < new Date()) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
@@ -89,6 +90,7 @@ export const verifyOtp = async (req, res) => {
         res.status(500).json({ message: 'Server error during OTP verification', error: error.message });
     }
 };
+
 
 // Resend OTP
 export const requestOtp = async (req, res) => {
