@@ -13,6 +13,7 @@ import {
 
 import {
     transferCryptocurrency,
+    receiveCryptocurrency,
     swapCryptocurrency,
     p2pTrade
 } from '../controllers/cryptoTransactionController.js';
@@ -30,7 +31,9 @@ router.post('/wallet/sell', sellCryptoCurrency);
 
 // Transaction Routes
 router.post('/transaction/transfer', transferCryptocurrency);
+router.post('/transaction/receive', receiveCryptocurrency); 
 router.post('/transaction/swap', swapCryptocurrency);
 router.post('/transaction/p2p', p2pTrade);
+
 
 export default router;

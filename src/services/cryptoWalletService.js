@@ -31,51 +31,79 @@ export const generateQRCode = async (address) => {
     }
 };
 
+export const receiveCrypto = async (toAddress, fromAddress, amount) => {
+    try {
+        const toUser = await getUserByWalletAddress(toAddress);
+
+        if (!toUser) {
+            throw new Error('Recipient user not found');
+        }
+
+        const transaction = {
+            fromAddress,
+            toAddress,
+            amount,
+            currency: 'ETH',
+            transactionType: 'RECEIVE',
+            status: 'SUCCESS',
+        };
+
+        await TradingHistory.create(transaction);
+        await sendNotification(toUser, 'Crypto Received', `You received ${amount} ETH from ${fromAddress}`);
+
+        return transaction;
+    } catch (error) {
+        console.error('Error receiving crypto:', error);
+        throw new Error('Failed to receive crypto');
+    }
+};
+
+
+
 export const transferCrypto = async (fromAddress, toAddress, amount, privateKey) => {
     const tx = {
         from: fromAddress,
         to: toAddress,
         value: web3.utils.toWei(amount.toString(), 'ether'),
         gas: 21000,
-        
     };
 
     try {
         const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
         const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
 
-        // Fetch user by address to send notifications
+        // Send notifications
         const fromUser = await getUserByWalletAddress(fromAddress);
         const toUser = await getUserByWalletAddress(toAddress);
 
         if (fromUser) {
             await sendNotification(fromUser, 'Crypto Transfer Successful', `Transferred ${amount} ETH to ${toAddress}`);
         }
-        if (toUser) {
-            await sendNotification(toUser, 'Crypto Transfer Received', `You received ${amount} ETH from ${fromAddress}`);
+
+        if (receipt.status) {
+            await receiveCrypto(toAddress, fromAddress, amount);
         }
+
+        const transaction = {
+            userId: fromUser._id,
+            transactionType: 'TRANSFER',
+            fromAddress,
+            toAddress,
+            amount,
+            currency: 'ETH',
+            status: receipt.status ? 'SUCCESS' : 'FAILED',
+            transactionHash: receipt.transactionHash,
+        };
+
+        await TradingHistory.create(transaction);
 
         return receipt;
     } catch (error) {
         console.error('Error transferring crypto:', error);
         throw new Error('Failed to transfer crypto');
     }
-
-    const transaction = {
-        userId: fromUser._id,
-        transactionType: 'TRANSFER',
-        fromAddress,
-        toAddress,
-        amount,
-        currency: 'ETH', // Adjust this based on your application's requirements
-        status: receipt.status ? 'SUCCESS' : 'FAILED',
-        transactionHash: receipt.transactionHash,
-    };
-    
-    await TradingHistory.create(transaction);
-    
-    return receipt;
 };
+
 
 export const performP2PTrade = async (sellerAddress, buyerAddress, amount, privateKey) => {
     try {

@@ -12,7 +12,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import './src/config/passportConfig.js';
 import connectDB from './src/config/db.js';
-import tradingHistoryRoute from './src/routes/tradingHistoryRoute.js'; // This import is correct
+import tradingHistoryRoute from './src/routes/tradingHistoryRoute.js'; 
+import MongoStore from 'connect-mongo';
+
 
 dotenv.config();
 
@@ -20,14 +22,14 @@ const app = express();
 
 // CORS options
 const corsOptions = {
-  origin: '*',  // Allows all origins (for development purposes)
+  origin: '*',  // Allows all origins 
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,  // Allows credentials to be included in requests (optional)
+  credentials: true,  
   optionsSuccessStatus: 204
 };
 
 // Middleware
-app.use(cors(corsOptions));  // Use the CORS middleware with custom options
+app.use(cors(corsOptions));  
 app.use(helmet());
 app.use(express.json());
 
@@ -37,6 +39,23 @@ app.use(
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: true,
+    })
+);
+
+
+// Connect to MongoDB
+connectDB();
+
+// Session middleware using connect-mongo
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI, // Use your MongoDB URI from environment variables
+            collectionName: 'sessions', // Optional: you can specify a collection name for sessions
+        }),
     })
 );
 
@@ -51,7 +70,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/utilities', utilityRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/wallet', walletRoutes);
-app.use('/api/tradinghistory', tradingHistoryRoute); // Use the correct variable name here
+app.use('/api/tradinghistory', tradingHistoryRoute); 
 
 // Root route
 app.get('/', (req, res) => {
@@ -75,8 +94,6 @@ app.use((error, req, res, next) => {
     });
 });
 
-// Connect to MongoDB
-connectDB();
 
 // Start the server
 const PORT = process.env.PORT || 5000;

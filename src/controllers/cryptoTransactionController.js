@@ -1,9 +1,10 @@
-import { transferCrypto, swapCrypto, performP2PTrade } from '../services/cryptoWalletService.js';
+import { transferCrypto, swapCrypto, performP2PTrade, receiveCrypto } from '../services/cryptoWalletService.js';
 
+// Transfer cryptocurrency
 export const transferCryptocurrency = async (req, res) => {
     try {
         const { fromAddress, toAddress, amount, privateKey } = req.body;
-        const userId = req.user?.id; // Accessing user ID from request
+        const userId = req.user?.id;
 
         if (!userId) {
             return res.status(400).json({ message: 'User ID is required' });
@@ -19,6 +20,24 @@ export const transferCryptocurrency = async (req, res) => {
         return res.status(500).json({ message: 'Failed to transfer crypto', error: error.message });
     }
 };
+
+// Receive cryptocurrency
+export const receiveCryptocurrency = async (req, res) => {
+    try {
+        const { toAddress, fromAddress, amount } = req.body;
+
+        if (!toAddress || !fromAddress || !amount) {
+            return res.status(400).json({ message: 'To address, from address, and amount are required' });
+        }
+
+        const transaction = await receiveCrypto(toAddress, fromAddress, amount);
+        return res.status(200).json(transaction);
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to receive crypto', error: error.message });
+    }
+};
+
+
 
 export const swapCryptocurrency = async (req, res) => {
     try {
