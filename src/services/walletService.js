@@ -1,9 +1,8 @@
 import Wallet from '../models/walletModel.js';
-import { convertCurrency } from '../utils/currencyConversion.js';
 
-export const getWalletBalance = async (userId, currency) => {
+export const getWalletBalance = async (currency) => {
     try {
-        const wallet = await Wallet.findOne({ userId, currency });
+        const wallet = await Wallet.findOne({ currency });
 
         if (!wallet) {
             return null;  // Return null if wallet is not found
@@ -19,8 +18,8 @@ export const getWalletBalance = async (userId, currency) => {
     }
 };
 
-export const updateWalletBalance = async (userId, amount, isDeposit = true) => {
-    const wallet = await Wallet.findOne({ userId }).exec();
+export const updateWalletBalance = async (amount, isDeposit = true) => {
+    const wallet = await Wallet.findOne({}).exec();
     if (!wallet) {
         throw new Error('Wallet not found');
     }
