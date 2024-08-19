@@ -3,7 +3,9 @@ import { getWalletBalance, updateWalletBalance } from '../services/walletService
 
 export const getBalance = async (req, res, next) => {
     try {
-        const { currency, userId } = req.query;  // Get userId from query parameters
+        const { currency } = req.query;  // Currency can still come from query params
+        const userId = req.userId;  // Get userId from middleware
+
         if (!userId) {
             return res.status(400).json({ message: 'User ID is required' });
         }
@@ -17,7 +19,9 @@ export const getBalance = async (req, res, next) => {
 
 export const updateBalance = async (req, res, next) => {
     try {
-        const { amount, isDeposit, userId } = req.body;  // Include userId in the request body
+        const { amount, isDeposit } = req.body;
+        const userId = req.userId;  // Get userId from middleware
+
         if (!userId) {
             return res.status(400).json({ message: 'User ID is required' });
         }
@@ -28,3 +32,4 @@ export const updateBalance = async (req, res, next) => {
         next(error);
     }
 };
+
