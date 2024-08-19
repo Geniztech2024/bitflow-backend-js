@@ -127,3 +127,16 @@ export const confirmAuthCode = async (email, authCode) => {
         throw new Error('Failed to confirm authentication code');
     }
 };
+
+// Update user profile information
+export const updateProfile = async (userId, profileData) => {
+    try {
+        const updatedUser = await User.findByIdAndUpdate(userId, profileData, { new: true }).exec();
+        if (!updatedUser) throw new Error('User not found');
+
+        return updatedUser;
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        throw new Error('Failed to update profile');
+    }
+};
