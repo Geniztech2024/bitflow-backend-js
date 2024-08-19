@@ -1,30 +1,23 @@
+// protect.js (middleware)
 import jwt from 'jsonwebtoken';
-import User from '../models/userModel.js';
 
-export const protect = async (req, res, next) => {
-    let token;
+export const protect = (req, res, next) => {
+    const authHeader = req.headers.authorization;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
-    } else {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ message: 'Not authorized, no token' });
     }
 
     try {
+        const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        const user = await User.findById(decoded.id);
-
-        if (!user) {
-            return res.status(401).json({ message: 'Not authorized, user not found' });
-        }
-
-        req.user = user;
-        req.userId = user._id;  // Attach userId to the request object
+        // Attach user ID to request
+        req.userId = decoded.id;
 
         next();
     } catch (error) {
+        console.error('Token verification error:', error.message);
         res.status(401).json({ message: 'Not authorized, token failed' });
     }
 };
-

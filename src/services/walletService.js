@@ -2,19 +2,21 @@ import Wallet from '../models/walletModel.js';
 import { convertCurrency } from '../utils/currencyConversion.js';
 
 export const getWalletBalance = async (userId, currency) => {
-    const wallet = await Wallet.findOne({ userId }).exec();
-    if (!wallet) {
-        throw new Error('Wallet not found');
+    try {
+        const wallet = await Wallet.findOne({ userId, currency });
+
+        if (!wallet) {
+            return null;  // Return null if wallet is not found
+        }
+
+        return {
+            cryptoBalance: wallet.cryptoBalance,
+            fiatBalance: wallet.fiatBalance
+        };
+    } catch (error) {
+        console.error('Error fetching wallet balance:', error.message);
+        throw new Error('Error fetching wallet balance');
     }
-
-    const cryptoInCurrency = await convertCurrency(wallet.cryptoBalance, currency);
-    const fiatBalance = currency === 'NGN' ? wallet.fiatBalance * 460 : wallet.fiatBalance;
-
-    return {
-        cryptoBalance: cryptoInCurrency,
-        fiatBalance,
-        currency,
-    };
 };
 
 export const updateWalletBalance = async (userId, amount, isDeposit = true) => {
