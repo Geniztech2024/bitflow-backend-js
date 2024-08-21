@@ -6,6 +6,11 @@ import jwt from 'jsonwebtoken';
 import { addCountryCode } from '../utils/phoneUtils.js';
 import passport from 'passport';
 
+// Helper function to generate a numeric OTP
+const generateNumericOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString(); // Generates a 6-digit numeric OTP
+};
+
 // Register a new user
 export const register = async (req, res) => {
     console.log('Request Body:', req.body);
@@ -27,7 +32,7 @@ export const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = crypto.randomBytes(3).toString('hex');
+        const otp = generateNumericOTP();
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         const newUser = new User({
@@ -111,8 +116,8 @@ export const requestOtp = async (req, res) => {
             return res.status(400).json({ message: 'Account already verified' });
         }
 
-        // Generate a new OTP
-        const otp = crypto.randomBytes(3).toString('hex');
+        // Generate a new numeric OTP
+        const otp = generateNumericOTP();
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         // Update user with the new OTP and expiry time
@@ -135,6 +140,7 @@ export const requestOtp = async (req, res) => {
         res.status(500).json({ message: 'Server error during OTP request', error: error.message });
     }
 };
+
 
 // Login
 export const login = async (req, res) => {

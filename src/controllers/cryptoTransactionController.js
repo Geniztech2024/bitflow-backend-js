@@ -21,17 +21,26 @@ export const transferCryptocurrency = async (req, res) => {
     }
 };
 
+
 // Receive cryptocurrency
 export const receiveCryptocurrency = async (req, res) => {
     try {
-        const { toAddress, fromAddress, amount } = req.body;
+        const { toAddress, qrCode } = req.body;  // Expecting only toAddress and qrCode
 
-        if (!toAddress || !fromAddress || !amount) {
-            return res.status(400).json({ message: 'To address, from address, and amount are required' });
+        if (!toAddress || !qrCode) {
+            return res.status(400).json({ message: 'To address and QR code are required' });
         }
 
-        const transaction = await receiveCrypto(toAddress, fromAddress, amount);
-        return res.status(200).json(transaction);
+        // Assuming receiveCrypto handles the actual receiving of the crypto using the QR code
+        const transaction = await receiveCrypto(toAddress, qrCode);
+
+        if (transaction.status === 'success') {
+            // Assuming transaction.amount is the amount received
+            await updateWalletBalance(req.user._id, transaction.amount, true);  // Update the wallet balance
+            return res.status(200).json({ message: 'Crypto received successfully', transaction });
+        } else {
+            return res.status(400).json({ message: 'Failed to receive crypto', error: transaction.error });
+        }
     } catch (error) {
         return res.status(500).json({ message: 'Failed to receive crypto', error: error.message });
     }

@@ -15,7 +15,6 @@ import connectDB from './src/config/db.js';
 import tradingHistoryRoute from './src/routes/tradingHistoryRoute.js'; 
 import MongoStore from 'connect-mongo';
 
-
 dotenv.config();
 
 const app = express();
@@ -32,16 +31,6 @@ const corsOptions = {
 app.use(cors(corsOptions));  
 app.use(helmet());
 app.use(express.json());
-
-// Session middleware (required for Passport)
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: true,
-    })
-);
-
 
 // Connect to MongoDB
 connectDB();
@@ -77,15 +66,9 @@ app.get('/', (req, res) => {
     res.send('Welcome to the Biltflow API');
 });
 
-// Error handling
-app.use((req, res, next) => {
-    res.setTimeout(120000, () => {  // Set timeout to 2 minutes
-        res.status(408).send('Request timed out');
-    });
-    next();
-});
-
-app.use((error, req, res, next) => {
+// Error handling middleware
+app.use((error, req, res, next) => { 
+    console.error(error.stack);
     res.status(error.status || 500);
     res.json({
         error: {
@@ -94,6 +77,13 @@ app.use((error, req, res, next) => {
     });
 });
 
+// Request timeout middleware
+app.use((req, res, next) => {
+    res.setTimeout(120000, () => {  // Set timeout to 2 minutes
+        res.status(408).send('Request timed out');
+    });
+    next();
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
