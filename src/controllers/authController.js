@@ -5,27 +5,25 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { addCountryCode } from '../utils/phoneUtils.js';
 import passport from 'passport';
+import { registerSchema, otpSchema, requestOtpSchema, loginSchema } from '../middleware/validationSchema.js';
 
-// Helper function to generate a numeric OTP
+// Function to generate a numeric OTP
 const generateNumericOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString(); // Generates a 6-digit numeric OTP
+    const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+    return otp.toString();
 };
+
 
 // Register a new user
 export const register = async (req, res) => {
-    console.log('Request Body:', req.body);
+    const { error } = registerSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
     const { fullName, email, password, confirmPassword, gender, phoneNumber, googleId } = req.body;
 
     try {
-        // Validate input
-        if (!fullName || !email || !password || !confirmPassword || !gender || !phoneNumber) {
-            return res.status(400).json({ message: 'all fields required' });
-        }
-
-        if (password !== confirmPassword) {
-            return res.status(400).json({ message: 'Passwords do not match' });
-        }
-
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
@@ -48,7 +46,6 @@ export const register = async (req, res) => {
 
         await newUser.save();
 
-        // Send OTP via email
         try {
             await sendOTPEmail(email, otp);
         } catch (error) {
@@ -65,14 +62,14 @@ export const register = async (req, res) => {
 
 // Verify OTP
 export const verifyOtp = async (req, res) => {
+    const { error } = otpSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
     const { otp } = req.body;
 
     try {
-        if (!otp) {
-            return res.status(400).json({ message: 'OTP is required' });
-        }
-
-        // Find the user by OTP
         const user = await User.findOne({ otp });
 
         if (!user) {
@@ -96,16 +93,16 @@ export const verifyOtp = async (req, res) => {
     }
 };
 
-
 // Resend OTP
 export const requestOtp = async (req, res) => {
+    const { error } = requestOtpSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
     const { email } = req.body;
 
     try {
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required' });
-        }
-
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -116,17 +113,14 @@ export const requestOtp = async (req, res) => {
             return res.status(400).json({ message: 'Account already verified' });
         }
 
-        // Generate a new numeric OTP
         const otp = generateNumericOTP();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-        // Update user with the new OTP and expiry time
         user.otp = otp;
         user.otpExpires = otpExpires;
 
         await user.save();
 
-        // Send the new OTP to the user's email
         try {
             await sendOTPEmail(user.email, otp);
         } catch (error) {
@@ -141,16 +135,16 @@ export const requestOtp = async (req, res) => {
     }
 };
 
-
 // Login
 export const login = async (req, res) => {
+    const { error } = loginSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
     const { email, password } = req.body;
 
     try {
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
-        }
-
         const user = await User.findOne({ email });
         if (!user || !user.isVerified) {
             return res.status(400).json({ message: 'Invalid credentials or account not verified' });

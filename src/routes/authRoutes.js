@@ -1,14 +1,14 @@
-// src/routes/authRoutes.js
-import { Router } from 'express';
-import { register, login, verifyOtp, googleAuth, googleAuthCallback, requestOtp } from '../controllers/authController.js';
+import express from 'express';
+import { register, verifyOtp, requestOtp, login, googleAuth, googleAuthCallback } from '../controllers/authController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
-const router = Router();
+const router = express.Router();
 
 router.post('/register', register);
-router.post('/login', login);
 router.post('/verify-otp', verifyOtp);
-router.get('/google', googleAuth);
-router.get('/google/callback', googleAuthCallback);
 router.post('/request-otp', requestOtp);
+router.post('/login', login);
+router.get('/auth/google', googleAuth);
+router.get('/auth/google/callback', googleAuthCallback);
 
 export default router;

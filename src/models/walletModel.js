@@ -1,20 +1,24 @@
+// src/models/walletModel.js
 import mongoose from 'mongoose';
 
 const walletSchema = new mongoose.Schema({
     cryptoBalance: {
         type: Number,
         default: 0,
-        required: true
+        required: true,
+        min: 0 // Ensure balance cannot be negative
     },
     fiatBalance: {
         type: Number,
         default: 0,
-        required: true
+        required: true,
+        min: 0 // Ensure balance cannot be negative
     },
     currency: {
         type: String,
         required: true,
-        default: 'USD' // Set a default currency if necessary
+        default: 'USD',
+        enum: ['USD', 'EUR', 'NGN', 'BTC', 'ETH'] // Limit to supported currencies
     }
 }, {
     timestamps: true // Automatically manage createdAt and updatedAt fields

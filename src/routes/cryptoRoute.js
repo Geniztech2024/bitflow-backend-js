@@ -8,7 +8,7 @@ import {
 } from '../controllers/cryptoWalletController.js';
 
 import {
-    getMarketData
+    getMarketData,getHistoricalData
 } from '../controllers/cryptoMarketControlller.js';
 
 import {
@@ -22,6 +22,7 @@ const router = Router();
 
 // Market Data Routes
 router.get('/market', getMarketData);
+router.get('/historicalMarketData', getHistoricalData);
 
 // Wallet Routes
 router.post('/wallet/create', createWallet);

@@ -3,7 +3,7 @@ import { depositFunds as depositFundsService, withdrawFunds as withdrawFundsServ
 
 export const depositFunds = async (req, res, next) => {
     try {
-        const transaction = await depositFundsService(req);
+        const transaction = await depositFundsService(req.body);
         return res.status(200).json(transaction);
     } catch (error) {
         next(error);
@@ -12,7 +12,7 @@ export const depositFunds = async (req, res, next) => {
 
 export const withdrawFunds = async (req, res, next) => {
     try {
-        const transaction = await withdrawFundsService(req);
+        const transaction = await withdrawFundsService(req.body);
         return res.status(200).json(transaction);
     } catch (error) {
         next(error);
