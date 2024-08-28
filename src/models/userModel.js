@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
     isVerified: { type: Boolean, default: false },
     otp: { type: String },
     phoneNumber: { type: String },
-    otpExpires: { type: Date }
+    otpExpires: { type: Date },
+    wallet: { type: mongoose.Schema.Types.ObjectId, ref: 'Wallet' } // Add wallet reference
 }, { timestamps: true });
 
 // Virtual field to get the string representation of _id

@@ -13,7 +13,6 @@ const generateNumericOTP = () => {
     return otp.toString();
 };
 
-
 // Register a new user
 export const register = async (req, res) => {
     const { error } = registerSchema.validate(req.body);
@@ -21,7 +20,7 @@ export const register = async (req, res) => {
         return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { fullName, email, password, confirmPassword, gender, phoneNumber, googleId } = req.body;
+    const { fullName, email, password, gender, phoneNumber, googleId } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -44,7 +43,17 @@ export const register = async (req, res) => {
             ...(googleId && { googleId })
         });
 
-        await newUser.save();
+        // Create and associate wallet with the user
+        const newWallet = new Wallet({
+            fiatBalance: 0,
+            cryptoBalance: 0,
+            currency: 'USD' // Default currency
+        });
+
+        await newWallet.save(); // Save the wallet
+
+        newUser.wallet = newWallet._id; // Associate wallet with the user
+        await newUser.save(); // Save the user with the wallet reference
 
         try {
             await sendOTPEmail(email, otp);

@@ -8,16 +8,16 @@ const validCurrencies = ['USD', 'EUR', 'NGN', 'BTC', 'ETH'];
 // Validation Schema
 const currencySchema = Joi.string().valid(...validCurrencies).required();
 
-// Fetch wallet balance based on currency
-export const getWalletBalance = async (currency) => {
+// Fetch wallet balance based on userId and currency
+export const getWalletBalance = async (userId, currency) => {
     try {
         // Validate currency input
         const { error } = currencySchema.validate(currency);
         if (error) throw new Error(`Invalid currency format: ${currency}`);
 
-        const wallet = await Wallet.findOne({ currency }).exec();
+        const wallet = await Wallet.findOne({ userId, currency }).exec();
         if (!wallet) {
-            console.error(`Wallet not found for currency: ${currency}`);
+            console.error(`Wallet not found for userId: ${userId}, currency: ${currency}`);
             return null;  // Return null if wallet is not found
         }
 
@@ -32,16 +32,16 @@ export const getWalletBalance = async (currency) => {
     }
 };
 
-// Update wallet balance
-export const updateWalletBalance = async (currency, amount, isDeposit = true) => {
+// Update wallet balance based on userId and currency
+export const updateWalletBalance = async (userId, currency, amount, isDeposit = true) => {
     try {
         // Validate currency input
         const { error } = currencySchema.validate(currency);
         if (error) throw new Error(`Invalid currency format: ${currency}`);
 
-        const wallet = await Wallet.findOne({ currency }).exec();
+        const wallet = await Wallet.findOne({ userId, currency }).exec();
         if (!wallet) {
-            throw new Error(`Wallet not found for currency: ${currency}`);
+            throw new Error(`Wallet not found for userId: ${userId}, currency: ${currency}`);
         }
 
         if (isDeposit) {

@@ -5,9 +5,11 @@ import { getWalletBalance, updateWalletBalance } from '../services/walletService
 export const getWalletBalanceController = async (req, res) => {
     try {
         const { currency } = req.query;  // Assuming currency is passed as a query parameter
-        const balance = await getWalletBalance(currency);
+        const userId = req.userId;  // Assuming userId is available in the request object
+
+        const balance = await getWalletBalance(userId, currency);
         if (!balance) {
-            return res.status(404).json({ message: `Wallet not found for currency: ${currency}` });
+            return res.status(404).json({ message: `Wallet not found for userId: ${userId}, currency: ${currency}` });
         }
         res.json(balance);
     } catch (error) {
@@ -19,9 +21,10 @@ export const getWalletBalanceController = async (req, res) => {
 // Controller to update wallet balance
 export const updateWalletBalanceController = async (req, res) => {
     try {
-        const { currency, amount } = req.body;  // Assuming currency and amount are passed in the request body
-        const isDeposit = req.body.isDeposit || true;  // Default to deposit if not specified
-        const updatedBalance = await updateWalletBalance(currency, amount, isDeposit);
+        const { currency, amount, isDeposit } = req.body;  // Assuming currency, amount, and isDeposit are passed in the request body
+        const userId = req.userId;  // Assuming userId is available in the request object
+
+        const updatedBalance = await updateWalletBalance(userId, currency, amount, isDeposit);
         res.json(updatedBalance);
     } catch (error) {
         console.error('Error in updateWalletBalanceController:', error.message);
