@@ -1,4 +1,5 @@
 import User from '../models/userModel.js';
+import Wallet from '../models/walletModel.js';
 import crypto from 'crypto';
 import { sendOTPEmail } from '../services/smsService.js';
 import bcrypt from 'bcryptjs';
@@ -20,7 +21,7 @@ export const register = async (req, res) => {
         return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { fullName, email, password, gender, phoneNumber, googleId } = req.body;
+    const { fullName, email, password, gender, phoneNumber } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -39,8 +40,7 @@ export const register = async (req, res) => {
             gender,
             phoneNumber,
             otp,
-            otpExpires,
-            ...(googleId && { googleId })
+            otpExpires
         });
 
         // Create and associate wallet with the user
