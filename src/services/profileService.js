@@ -1,21 +1,39 @@
-// src/services/profileService.js
-
 import User from '../models/userModel.js';
-import KYCModel from '../models/KYCModel.js'; // Import the default export
+import KYCModel from '../models/KYCModel.js';
 import { sendNotification, sendOTPEmail } from './smsService.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
-// Update KYC information
+export const getProfile = async (userId) => {
+    try {
+        const user = await User.findById(userId).select('-password').exec();
+        if (!user) throw new Error('User not found');
+
+        const kyc = await KYCModel.findOne({ userId }).exec();
+
+        return {
+            user,
+            kyc,
+        };
+    } catch (error) {
+        console.error('Error getting profile:', error);
+        throw new Error('Failed to get profile');
+    }
+};
+
 export const updateKYC = async (userId, kycData) => {
     try {
-        const kyc = await KYCModel.findOneAndUpdate({ userId }, kycData, { new: true, upsert: true });
+        const kyc = await KYCModel.findOneAndUpdate(
+            { userId },
+            kycData,
+            { new: true, upsert: true }
+        );
 
-        // Send notification
+        const user = await User.findById(userId).exec();
         await sendNotification({
-            email: kycData.email,
+            email: user.email,
             message: 'Your KYC information has been updated.',
-            subject: 'KYC Update Successful'
+            subject: 'KYC Update Successful',
         });
 
         return kyc;
@@ -25,7 +43,6 @@ export const updateKYC = async (userId, kycData) => {
     }
 };
 
-// Change user password
 export const changePassword = async (userId, currentPassword, newPassword) => {
     try {
         const user = await User.findById(userId).exec();
@@ -38,11 +55,10 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
         user.password = hashedPassword;
         await user.save();
 
-        // Send notification
         await sendNotification({
             email: user.email,
             message: 'Your password has been successfully changed.',
-            subject: 'Password Change Successful'
+            subject: 'Password Change Successful',
         });
     } catch (error) {
         console.error('Error changing password:', error);
@@ -50,7 +66,6 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
     }
 };
 
-// Handle forgot password
 export const forgotPassword = async (email) => {
     try {
         const user = await User.findOne({ email }).exec();
@@ -63,14 +78,12 @@ export const forgotPassword = async (email) => {
         user.passwordResetExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        // Send OTP to email
         await sendOTPEmail(email, resetToken);
 
-        // Send notification
         await sendNotification({
             email,
             message: 'A password reset link has been sent to your email.',
-            subject: 'Password Reset Request'
+            subject: 'Password Reset Request',
         });
     } catch (error) {
         console.error('Error handling forgot password:', error);
@@ -78,7 +91,6 @@ export const forgotPassword = async (email) => {
     }
 };
 
-// Reset password
 export const resetPassword = async (resetToken, newPassword) => {
     try {
         const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
@@ -94,11 +106,10 @@ export const resetPassword = async (resetToken, newPassword) => {
         user.passwordResetExpires = undefined;
         await user.save();
 
-        // Send notification
         await sendNotification({
             email: user.email,
             message: 'Your password has been successfully reset.',
-            subject: 'Password Reset Successful'
+            subject: 'Password Reset Successful',
         });
     } catch (error) {
         console.error('Error resetting password:', error);
@@ -116,7 +127,6 @@ export const confirmAuthCode = async (email, authCode) => {
             throw new Error('Invalid or expired authentication code');
         }
 
-        // Clear the reset token and expiration after successful confirmation
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
         await user.save();
@@ -128,7 +138,6 @@ export const confirmAuthCode = async (email, authCode) => {
     }
 };
 
-// Update user profile information
 export const updateProfile = async (userId, profileData) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(userId, profileData, { new: true }).exec();

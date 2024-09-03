@@ -24,15 +24,20 @@ export const register = async (req, res) => {
     const { fullName, email, password, gender, phoneNumber } = req.body;
 
     try {
+        // Check if the user already exists
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Generate OTP and set expiration time
         const otp = generateNumericOTP();
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+        // Create new user
         const newUser = new User({
             fullName,
             email,
@@ -43,19 +48,21 @@ export const register = async (req, res) => {
             otpExpires
         });
 
+        // Save the user first
+        const savedUser = await newUser.save();
+
         // Create and associate wallet with the user
         const newWallet = new Wallet({
+            userId: savedUser._id,  // Set the userId for the wallet
             fiatBalance: 0,
             cryptoBalance: 0,
-            currency: 'USD' // Default currency
+            currency: 'USD'  // Default currency
         });
 
         await newWallet.save(); // Save the wallet
 
-        newUser.wallet = newWallet._id; // Associate wallet with the user
-        await newUser.save(); // Save the user with the wallet reference
-
         try {
+            // Send OTP email
             await sendOTPEmail(email, otp);
         } catch (error) {
             console.error('Error sending OTP email:', error.message);
@@ -68,7 +75,6 @@ export const register = async (req, res) => {
         res.status(500).json({ message: 'Server error during registration', error: error.message });
     }
 };
-
 // Verify OTP
 export const verifyOtp = async (req, res) => {
     const { error } = otpSchema.validate(req.body);

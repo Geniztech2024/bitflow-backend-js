@@ -1,4 +1,3 @@
-// src/controllers/profileController.js
 import {
     updateKYCValidation,
     changePasswordValidation,
@@ -9,6 +8,7 @@ import {
 } from '../middleware/profileValidation.js';
 
 import {
+    getProfile as getProfileService,
     updateKYC as updateKYCService,
     changePassword as changePasswordService,
     forgotPassword as forgotPasswordService,
@@ -16,6 +16,16 @@ import {
     confirmAuthCode as confirmAuthCodeService,
     updateProfile as updateProfileService,
 } from '../services/profileService.js';
+
+export const getProfileController = async (req, res) => {
+    try {
+        const userId = req.user.id;  // Assuming user ID is stored in the request object
+        const profile = await getProfileService(userId);
+        res.status(200).json(profile);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 export const updateKYC = async (req, res) => {
     try {
@@ -25,9 +35,9 @@ export const updateKYC = async (req, res) => {
         const userId = req.user.id;
         const kycData = req.body;
         const kyc = await updateKYCService(userId, kycData);
-        return res.status(200).json({ message: 'KYC updated successfully', kyc });
+        res.status(200).json({ message: 'KYC updated successfully', kyc });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -39,9 +49,9 @@ export const changePassword = async (req, res) => {
         const userId = req.user.id;
         const { currentPassword, newPassword } = req.body;
         await changePasswordService(userId, currentPassword, newPassword);
-        return res.status(200).json({ message: 'Password changed successfully' });
+        res.status(200).json({ message: 'Password changed successfully' });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -52,9 +62,9 @@ export const forgotPassword = async (req, res) => {
 
         const { email } = req.body;
         await forgotPasswordService(email);
-        return res.status(200).json({ message: 'Password reset link sent to your email' });
+        res.status(200).json({ message: 'Password reset link sent to your email' });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -65,9 +75,9 @@ export const resetPassword = async (req, res) => {
 
         const { resetToken, newPassword } = req.body;
         await resetPasswordService(resetToken, newPassword);
-        return res.status(200).json({ message: 'Password reset successfully' });
+        res.status(200).json({ message: 'Password reset successfully' });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -78,9 +88,9 @@ export const confirmAuthCode = async (req, res) => {
 
         const { email, authCode } = req.body;
         const user = await confirmAuthCodeService(email, authCode);
-        return res.status(200).json({ message: 'Authentication code verified successfully', user });
+        res.status(200).json({ message: 'Authentication code verified successfully', user });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -93,8 +103,8 @@ export const updateProfile = async (req, res) => {
         const profileData = req.body;
 
         const updatedUser = await updateProfileService(userId, profileData);
-        return res.status(200).json({ message: 'Profile updated successfully', user: updatedUser });
+        res.status(200).json({ message: 'Profile updated successfully', user: updatedUser });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
