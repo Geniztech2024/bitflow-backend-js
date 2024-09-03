@@ -2,6 +2,14 @@
 import mongoose from 'mongoose';
 
 const walletSchema = new mongoose.Schema({
+
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',  // Reference to the User model
+        required: true,   
+        unique: true
+    },
+
     cryptoBalance: {
         type: Number,
         default: 0,
