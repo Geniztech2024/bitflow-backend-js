@@ -3,7 +3,7 @@ import TradingHistory from '../models/tradingHistoryModel.js';
 
 export const getTradingHistory = async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const userId = req.userId; // Use req.userId instead of req.user?.id
 
         if (!userId) {
             return res.status(400).json({ message: 'User ID is required' });
@@ -21,3 +21,4 @@ export const getTradingHistory = async (req, res) => {
         return res.status(500).json({ message: 'Failed to fetch trading history', error: error.message });
     }
 };
+
